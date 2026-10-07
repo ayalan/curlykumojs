@@ -1,6 +1,9 @@
+![curlykumo in action](https://github.com/ayalan/curlykumojs/blob/main/animate-in-out.gif?raw=true)
+
 # curlykumo
 
 Procedural clouds in the style of the kumo on hanafuda cards. Each cloud is generated from a seed, and it can grow from nothing to its full shape.
+
 
 ![One seed at four growth values, and four other seeds at full growth](docs/preview.png)
 
