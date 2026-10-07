@@ -1,0 +1,14 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+body{margin:0;font:14px sans-serif} .box{height:300px;overflow-y:auto;border:1px solid #999;width:340px} .sp{height:600px} curly-kumo{width:300px}
+</style></head><body>
+<curly-kumo id="zero" seed="34" growth="0"></curly-kumo>
+<curly-kumo id="full" seed="34"></curly-kumo>
+<curly-kumo id="timed" seed="8" growth="0"></curly-kumo>
+<curly-kumo id="fed" seed="21" growth="0"></curly-kumo>
+<div class="box" id="box1"><div class="sp"></div><curly-kumo id="hook" seed="5" enter="grow-in" leave="grow-out" duration="0.5s"></curly-kumo><div class="sp"></div></div>
+<div class="box" id="box2"><div class="sp"></div><curly-kumo id="link" seed="13" scroll-link></curly-kumo><div class="sp"></div></div>
+<div style="height:1500px"></div>
+<curly-kumo id="win" seed="3" enter="grow-in" leave="grow-out" duration="0.4s"></curly-kumo>
+<div style="height:1500px"></div>
+<script src="../curlykumo.js"></script>
+</body></html>

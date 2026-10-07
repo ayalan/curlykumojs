@@ -1,0 +1,37 @@
+{
+  "name": "curlykumo",
+  "version": "2.3.0",
+  "description": "Procedural hanafuda-style clouds (kumo) that grow. An SVG path generator and a <curly-kumo> HTML tag, with no dependencies.",
+  "main": "curlykumo.js",
+  "types": "curlykumo.d.ts",
+  "unpkg": "curlykumo.js",
+  "jsdelivr": "curlykumo.js",
+  "files": [
+    "curlykumo.js",
+    "curlykumo.d.ts",
+    "docs/agent-guide.md"
+  ],
+  "scripts": {
+    "test": "node test/check.js && node test/twitch.js",
+    "test:smooth": "node test/smooth.js",
+    "test:browser": "node test/tag.js",
+    "test:all": "node test/check.js --full && node test/twitch.js --full && node test/smooth.js --full && node test/tag.js",
+    "preview": "node tools/render-preview.js"
+  },
+  "keywords": [
+    "kumo",
+    "hanafuda",
+    "cloud",
+    "procedural",
+    "generative",
+    "svg",
+    "animation",
+    "custom-element",
+    "web-component"
+  ],
+  "author": "Aya Walraven",
+  "license": "MIT",
+  "devDependencies": {
+    "playwright": "^1.56.0"
+  }
+}

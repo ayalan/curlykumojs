@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>curlykumo: timed growth</title>
+<style>
+  body { font: 16px/1.5 system-ui, sans-serif; max-width: 520px; margin: 40px auto; padding: 0 16px; }
+  button { font: inherit; padding: 6px 14px; }
+</style>
+</head>
+<body>
+<h1>Timed growth</h1>
+<p>The tag starts at 0 and grows in when the page loads. The buttons run it again.</p>
+
+<curly-kumo id="cloud" seed="8" grow="in" duration="1.5s"></curly-kumo>
+
+<p>
+  <button id="in" type="button">Grow in</button>
+  <button id="out" type="button">Grow out</button>
+  <button id="half" type="button">Grow to 60</button>
+</p>
+
+<script src="../curlykumo.js"></script>
+<script>
+  const cloud = document.getElementById('cloud');
+  document.getElementById('in').addEventListener('click', () => cloud.growIn());
+  document.getElementById('out').addEventListener('click', () => cloud.growOut());
+  document.getElementById('half').addEventListener('click', () => cloud.growTo(60));
+</script>
+</body>
+</html>

@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>curlykumo: growth fed by JavaScript</title>
+<style>
+  body { font: 16px/1.5 system-ui, sans-serif; max-width: 520px; margin: 40px auto; padding: 0 16px; }
+  #pad { border: 1px dashed #999; padding: 16px; touch-action: none; cursor: crosshair; }
+  button { font: inherit; padding: 6px 14px; }
+</style>
+</head>
+<body>
+<h1>Growth fed by JavaScript</h1>
+<p>Move the pointer inside the dashed box. Each movement adds to a number from 0 to 100, and the cloud follows that number. There is no progress bar.</p>
+
+<div id="pad">
+  <curly-kumo id="cloud" seed="21" growth="0"></curly-kumo>
+</div>
+
+<p id="status" role="status">Collected 0 of 100</p>
+<p><button id="reset" type="button">Reset</button></p>
+
+<script src="../curlykumo.js"></script>
+<script>
+  const cloud = document.getElementById('cloud'), pad = document.getElementById('pad'), status = document.getElementById('status');
+  let collected = 0, last = null, full = false;
+  const show = () => {
+    status.textContent = 'Collected ' + Math.round(collected) + ' of 100' + (full ? '. The cloud is fully grown.' : '');
+  };
+
+  pad.addEventListener('pointermove', (e) => {
+    if (last) collected = Math.min(100, collected + Math.hypot(e.clientX - last[0], e.clientY - last[1]) / 28);
+    last = [e.clientX, e.clientY];
+    cloud.growth = collected;                       // feed the new value; call as often as it changes
+    show();
+  });
+  pad.addEventListener('pointerleave', () => { last = null; });
+
+  // the cloud reports each time it catches up with the value it was given
+  cloud.addEventListener('curlykumo-growend', (e) => { full = e.detail.growth === 100; show(); });
+
+  document.getElementById('reset').addEventListener('click', () => {
+    collected = 0; last = null; full = false; cloud.growth = 0;
+    show();
+  });
+</script>
+</body>
+</html>

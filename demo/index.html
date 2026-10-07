@@ -1,0 +1,467 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Curlykumo Playground</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<style>
+html { color-scheme: light dark; }
+body { margin: 0; }
+img { max-width: 100%; }
+[hidden] { display: none !important; }
+.filelink { font-family: var(--font-data); font-size: 13px; color: var(--accent); }
+/* Layout: cloud stage with its growth control on the left, parameter sliders on the right, reference material below. */
+:root {
+  --bg: #edecf1;
+  --surface: #f8f7fa;
+  --fg: #17151d;
+  --muted: #5d596b;
+  --rule: #cfccd9;
+  --accent: #c9301f;
+  --paper: #fdfcf8;
+  --on-paper: #1a1210;
+  --on-paper-muted: #5d596b;
+  --font-ui: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", "Segoe UI", system-ui, sans-serif;
+  --font-data: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15141a; --surface: #1f1d26; --fg: #ecebf2; --muted: #a09cb0; --rule: #35323f; --accent: #f05a47; --paper: #fdfcf8; --on-paper: #1a1210; --on-paper-muted: #5d596b;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15141a; --surface: #1f1d26; --fg: #ecebf2; --muted: #a09cb0; --rule: #35323f; --accent: #f05a47; --paper: #fdfcf8; --on-paper: #1a1210; --on-paper-muted: #5d596b;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-ui); font-size: 14px; line-height: 1.5; }
+.wrap { max-width: 1160px; margin-inline: auto; padding-inline: 20px; padding-block: 28px 56px; display: flex; flex-direction: column; gap: 32px; }
+
+header h1 { font-size: 30px; line-height: 1.15; font-weight: 700; margin: 0; letter-spacing: -0.01em; text-wrap: balance; }
+header p { margin: 6px 0 0; color: var(--muted); max-width: 64ch; font-size: 16px; }
+h2 { font-size: 13px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin: 0; color: var(--muted); }
+
+.bench { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 32px; align-items: start; }
+.stage { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.paper { background: var(--paper); border-radius: 6px; line-height: 0; aspect-ratio: 8 / 5; max-width: 100%; touch-action: pan-y; }
+.paper svg { display: block; width: 100%; height: 100%; }
+.paper.tracking { cursor: ew-resize; outline: 2px dashed var(--accent); outline-offset: 2px; }
+.stats { font-family: var(--font-data); font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; margin: 0; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
+.growth { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 4px 12px; align-items: center; border-top: 2px solid var(--fg); padding-top: 10px; }
+.growth label { font-size: 16px; font-weight: 700; }
+.growth output { font-family: var(--font-data); font-size: 14px; font-variant-numeric: tabular-nums; }
+.growth input { width: 100%; margin: 0; accent-color: var(--accent); }
+
+button, .seg label { font: inherit; font-size: 13px; font-weight: 500; }
+button { background: var(--surface); color: var(--fg); border: 1px solid var(--rule); border-radius: 4px; padding: 7px 12px; cursor: pointer; }
+button:hover { border-color: var(--fg); }
+button.primary { background: var(--fg); color: var(--bg); border-color: var(--fg); min-width: 5.5em; }
+button.primary:hover { background: var(--accent); border-color: var(--accent); color: var(--paper); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+.controls { display: flex; flex-direction: column; gap: 24px; min-width: 0; }
+.row { display: flex; flex-wrap: wrap; gap: 12px 24px; align-items: end; }
+.field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.field > span { font-size: 13px; color: var(--muted); }
+.seed { display: flex; gap: 6px; }
+.seed input { font-family: var(--font-data); font-size: 13px; width: 9ch; padding: 6px 8px; border: 1px solid var(--rule); border-radius: 4px; background: var(--surface); color: var(--fg); }
+
+.groups { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 24px 32px; }
+.group { display: flex; flex-direction: column; gap: 12px; border-top: 2px solid var(--fg); padding-top: 10px; min-width: 0; }
+.slider { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; align-items: baseline; }
+.slider label { font-size: 14px; }
+.slider output { font-family: var(--font-data); font-size: 12px; font-variant-numeric: tabular-nums; color: var(--muted); }
+.slider input { grid-column: 1 / -1; width: 100%; margin: 0; accent-color: var(--accent); }
+.slider small, .group > small { grid-column: 1 / -1; color: var(--muted); font-size: 12px; line-height: 1.35; }
+
+.swatches { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.swatches button { width: 26px; height: 26px; padding: 0; border-radius: 50%; }
+.swatches input[type="color"] { width: 34px; height: 28px; padding: 0; border: 1px solid var(--rule); border-radius: 4px; background: var(--surface); }
+.check { display: flex; gap: 8px; align-items: center; font-size: 14px; }
+.check input { accent-color: var(--accent); }
+
+.variants { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.variants button { padding: 6px; display: flex; flex-direction: column; gap: 6px; align-items: stretch; line-height: 1.2; }
+.variants button span { font-family: var(--font-data); font-size: 12px; color: var(--muted); text-align: left; }
+.variants .paper { border-radius: 3px; }
+
+section { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 32px; }
+.notes { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 6px; max-width: 65ch; }
+pre { margin: 0; background: var(--surface); border: 1px solid var(--rule); border-radius: 4px; padding: 12px; font-family: var(--font-data); font-size: 12px; line-height: 1.5; overflow-x: auto; max-height: 320px; }
+.head { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; justify-content: space-between; }
+#fallback textarea { width: 100%; height: 120px; font-family: var(--font-data); font-size: 12px; background: var(--surface); color: var(--fg); border: 1px solid var(--accent); border-radius: 4px; padding: 8px; }
+#fallback p { margin: 0 0 6px; color: var(--muted); }
+
+.lede { margin: 0; color: var(--muted); max-width: 65ch; }
+.demos { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 24px 32px; align-items: start; }
+.demo { display: flex; flex-direction: column; gap: 10px; min-width: 0; border-top: 2px solid var(--fg); padding-top: 10px; }
+.demo h3 { font-size: 16px; font-weight: 700; margin: 0; }
+.demo > p { margin: 0; color: var(--muted); font-size: 13px; }
+.demo .paper { aspect-ratio: auto; line-height: 1.5; padding: 14px; color: var(--on-paper); }
+.demo .pad { touch-action: none; cursor: crosshair; }
+.scrollbox { height: 300px; overflow-y: auto; font-size: 13px; }
+.scrollbox p { margin: 0 0 12px; color: var(--on-paper-muted); }
+.scrollbox .gap { height: 150px; }
+.scrollbox curly-kumo { margin-bottom: 12px; }
+
+@media (max-width: 800px) {
+  .bench { grid-template-columns: minmax(0, 1fr); }
+  .stage { position: static; }
+  header h1 { font-size: 24px; }
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1>curlykumo playground</h1>
+    <p>One cloud that grows. The seed fixes which cloud it is. Growth and every other slider change that cloud gradually, so each one can be animated.</p>
+  </header>
+
+  <div class="bench">
+    <div class="stage">
+      <div class="paper" id="stage" role="img" aria-label="Generated cloud"><svg id="view" xmlns="http://www.w3.org/2000/svg"></svg></div>
+      <div class="growth">
+        <label for="p-growth">Growth</label>
+        <input type="range" id="p-growth" min="0" max="1" step="0.001">
+        <output id="o-growth" for="p-growth"></output>
+      </div>
+      <div class="actions">
+        <button class="primary" id="btn-play" type="button">Play</button>
+        <label class="check"><input type="checkbox" id="pointer"> Pointer sets growth</label>
+      </div>
+      <p class="stats" id="stats"></p>
+    </div>
+
+    <div class="controls">
+      <div class="row">
+        <div class="field">
+          <span>Seed</span>
+          <div class="seed">
+            <button id="seed-prev" type="button" aria-label="Previous seed">&minus;</button>
+            <input type="number" id="seed" min="0" step="1" aria-label="Seed">
+            <button id="seed-next" type="button" aria-label="Next seed">+</button>
+          </div>
+        </div>
+        <button id="btn-seed" type="button">New seed</button>
+        <button id="btn-svg" type="button">Copy SVG</button>
+        <button id="btn-reset" type="button">Reset settings</button>
+      </div>
+
+      <div class="groups" id="groups"></div>
+
+      <div class="row">
+        <div class="field">
+          <span>Preview fill</span>
+          <div class="swatches" id="fills"><input type="color" id="fill" aria-label="Fill colour"></div>
+        </div>
+        <div class="field">
+          <span>Preview line</span>
+          <div class="swatches"><input type="color" id="stroke" aria-label="Line colour"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <section>
+    <h2>Same settings and growth, next six seeds</h2>
+    <div class="variants" id="variants"></div>
+  </section>
+
+  <section>
+    <h2>The curly-kumo tag</h2>
+    <p class="lede">One line of HTML places a cloud and animates its growth. On the tag, growth runs from 0 to 100. The three examples are live.</p>
+    <div class="demos">
+      <div class="demo">
+        <h3>Timed</h3>
+        <p>Grow in and grow out, started by the page.</p>
+        <div class="paper"><curly-kumo id="demo-timed" seed="8" duration="1.5s"></curly-kumo></div>
+        <div class="actions"><button id="demo-in" type="button">Grow in</button><button id="demo-out" type="button">Grow out</button></div>
+        <pre id="code-timed"></pre>
+      </div>
+      <div class="demo">
+        <h3>Fed by JavaScript</h3>
+        <p>The page sends a number from 0 to 100 and the cloud follows it. Here the number is collected from pointer movement.</p>
+        <div class="paper pad" id="entropy-pad"><curly-kumo id="demo-fed" seed="21" growth="0"></curly-kumo></div>
+        <p class="stats" id="entropy-out" role="status"></p>
+        <div class="actions"><button id="entropy-reset" type="button">Reset</button></div>
+        <pre id="code-fed"></pre>
+      </div>
+      <div class="demo">
+        <h3>Scroll</h3>
+        <p>Scroll inside the box.</p>
+        <div class="paper scrollbox" id="demo-scroll" tabindex="0" role="group" aria-label="Scroll example">
+          <p>The first cloud uses enter and leave. It grows in when half of it is visible and grows out when less than half is visible.</p>
+          <div class="gap"></div>
+          <curly-kumo seed="5" enter="grow-in" leave="grow-out" duration="1.2s"></curly-kumo>
+          <p>The second cloud uses scroll-link. Its growth follows the scroll position. It is 0 when its centre is at the bottom edge of the box and 100 when its centre reaches the middle. Stop scrolling and it stops.</p>
+          <div class="gap"></div>
+          <curly-kumo seed="13" scroll-link></curly-kumo>
+          <div class="gap"></div>
+          <p>End of the example.</p>
+        </div>
+        <pre id="code-scroll"></pre>
+      </div>
+    </div>
+  </section>
+
+  <div class="cols">
+    <section>
+      <div class="head"><h2>Generator settings</h2><button id="btn-json" type="button">Copy settings</button></div>
+      <pre id="json"></pre>
+    </section>
+    <section>
+      <div class="head"><h2>Use on a web page</h2><a class="filelink" href="../curlykumo.js">curlykumo.js</a></div>
+      <pre id="usage"></pre>
+    </section>
+  </div>
+
+  <section id="fallback" hidden>
+    <p>Copying was blocked. The text is selected below. Press Ctrl+C or Cmd+C.</p>
+    <textarea id="fallback-text" readonly aria-label="Text to copy"></textarea>
+  </section>
+
+  <div class="cols">
+    <section>
+      <h2>How a cloud is built</h2>
+      <ol class="notes">
+        <li>A cloud is one to five lobed masses that overlap. Later masses sit in front of earlier ones.</li>
+        <li>A mass is a ring of round lobes of unequal size. Its outline is one closed path.</li>
+        <li>A mass is kept thin, so the curls from its edge reach its middle.</li>
+        <li>A curl starts at a cusp of its mass outline and winds into its own lobe. Where two curls would cross, the older one is hidden behind the younger lobe.</li>
+        <li>As growth rises, the first mass appears and gains lobes at two fixed points. Further masses then emerge from its edge, starting at zero size.</li>
+      </ol>
+    </section>
+    <section>
+      <h2>What the generator returns</h2>
+      <ol class="notes">
+        <li>Geometry only: for each mass, one outline path and its curl paths, listed back to front.</li>
+        <li>The silhouette of the whole cloud as one path, and the bounding box.</li>
+        <li>No stroke width, colour or fill margin. The page applies the preview style on top.</li>
+        <li>The same settings always return the same paths.</li>
+      </ol>
+    </section>
+  </div>
+</div>
+
+<script src="../curlykumo.js"></script>
+<script>
+(function () {
+  const PALETTE = [['Red', '#dd3a2c'], ['Purple', '#3b3562'], ['Yellow', '#fdf736'], ['Blue', '#53afee'], ['Orange', '#f9762a'], ['Black', '#1a1210']];
+  const STYLE = { fill: '#dd3a2c', stroke: '#1a1210', strokeWidth: 2.4, margin: 3.2 };
+  const GROUPS = [
+    ['Masses', [
+      ['masses', 'Masses at full growth', 1, 5, 0.01, 'Lobed masses that overlap to form the cloud.'],
+      ['length', 'Length of the first mass', 4, 16, 0.1, 'Its lobe count at full growth.'],
+      ['spread', 'Spread', 0, 1.2, 0.01, 'How far a new mass sits outside the one it emerges from.'],
+      ['thickness', 'Mass thickness', 0.9, 1.8, 0.01, 'In lobe radii. Low values keep curls reaching the middle.'],
+      ['irregularity', 'Irregularity', 0, 0.3, 0.005, ''],
+    ]],
+    ['Lobes', [
+      ['lobe', 'Lobe size', 8, 48, 0.5, 'Mean lobe radius. Every length scales with it.'],
+      ['sizeVar', 'Size variation', 0, 0.8, 0.01, ''],
+      ['overlap', 'Overlap', 0.15, 0.4, 0.005, 'Higher gives shallower cusps.'],
+      ['squash', 'Vertical squash', 0.45, 1, 0.01, '1 gives round lobes.'],
+    ]],
+    ['Curls', [
+      ['curl', 'Share of lobes with a curl', 0, 1, 0.01, ''],
+      ['turns', 'Curl length', 0.3, 1.8, 0.01, 'In turns.'],
+      ['tight', 'Curl tightness', 0.1, 0.4, 0.005, 'Higher gives a smaller spiral.'],
+      ['curlVar', 'Curl variation', 0, 1, 0.01, ''],
+    ]],
+    ['Idle motion', [
+      ['sway', 'Sway', 0, 1, 0.01, 'Lobes slowly change size while the page is open. 0 turns it off.'],
+    ]],
+    ['Preview style', [
+      ['strokeWidth', 'Line width', 0.5, 6, 0.1, ''],
+      ['margin', 'Fill margin outside the line', 0, 8, 0.1, 'Style is not part of the generator output. The caller sets it.'],
+    ]],
+  ];
+  const KEY = 'kumo-v2-settings';
+  const $ = (id) => document.getElementById(id);
+  const reduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let P = Object.assign({}, CurlyKumo.DEFAULTS), ST = Object.assign({}, STYLE);
+  try { const saved = JSON.parse(localStorage.getItem(KEY) || '{}'); Object.assign(P, saved.params || {}); Object.assign(ST, saved.style || {}); } catch (e) { /* storage unavailable */ }
+  P.phase = 0;
+
+  const fmt = (v, step) => Number(v).toFixed(step >= 1 ? 0 : step >= 0.1 ? 1 : step >= 0.01 ? 2 : 3);
+  $('groups').innerHTML = GROUPS.map(([name, items]) =>
+    `<div class="group"><h2>${name}</h2>` + items.map(([id, label, min, max, step, hint]) =>
+      `<div class="slider"><label for="p-${id}">${label}</label><output id="o-${id}" for="p-${id}"></output>` +
+      `<input type="range" id="p-${id}" data-key="${id}" min="${min}" max="${max}" step="${step}">` +
+      (hint ? `<small>${hint}</small>` : '') + '</div>').join('') + '</div>').join('');
+  $('fills').insertAdjacentHTML('afterbegin', PALETTE.map(([n, c]) =>
+    `<button type="button" data-fill="${c}" style="background:${c}" aria-label="${n} fill" title="${n}"></button>`).join(''));
+  const isStyle = (k) => k in STYLE;
+
+  function fitBox(params) {
+    const b = CurlyKumo.generate(Object.assign({}, params, { growth: 1 })).bounds;
+    const pad = 12 + ST.margin + ST.strokeWidth + b.width * (params.sway > 0 ? 0.08 : 0.04);
+    let w = b.width + 2 * pad, h = b.height + 2 * pad;
+    if (w / h > 1.6) h = w / 1.6; else w = h * 1.6;
+    return [b.x + b.width / 2 - w / 2, b.y + b.height / 2 - h / 2, w, h].map((v) => Math.round(v * 10) / 10).join(' ');
+  }
+
+  let box = '', currentSVG = '';
+  function drawMain() {
+    const frame = CurlyKumo.generate(P), inner = CurlyKumo.toSVG(frame, ST);
+    $('view').innerHTML = inner;
+    currentSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${box}">${inner}</svg>`;
+    const lobes = frame.masses.reduce((t, m) => t + m.lobes.length, 0), curls = frame.masses.reduce((t, m) => t + new Set(m.curlLobes).size, 0);
+    $('stats').textContent = `${frame.masses.length} masses · ${lobes} lobes · ${curls} curls · ${(inner.length / 1024).toFixed(1)} kB of path data`;
+    $('p-growth').value = P.growth;
+    $('o-growth').textContent = P.growth.toFixed(2);
+  }
+  function drawVariants() {
+    let v = '';
+    for (let i = 1; i <= 6; i++) {
+      const q = Object.assign({}, P, { seed: P.seed + i });
+      v += `<button type="button" data-seed="${q.seed}" aria-label="Use seed ${q.seed}"><div class="paper"><svg xmlns="http://www.w3.org/2000/svg" viewBox="${fitBox(q)}">${CurlyKumo.toSVG(CurlyKumo.generate(q), ST)}</svg></div><span>seed ${q.seed}</span></button>`;
+    }
+    $('variants').innerHTML = v;
+  }
+  function exported() { const o = Object.assign({}, P); delete o.phase; if (!(o.sway > 0)) delete o.sway; return o; }
+  function sync() {
+    document.querySelectorAll('#groups input').forEach((el) => {
+      const k = el.dataset.key, v = isStyle(k) ? ST[k] : P[k];
+      el.value = v;
+      $('o-' + k).textContent = fmt(v, Number(el.step));
+    });
+    $('seed').value = P.seed;
+    $('fill').value = ST.fill;
+    $('stroke').value = ST.stroke;
+    box = fitBox(P);
+    $('view').setAttribute('viewBox', box);
+    drawMain();
+    drawVariants();
+    $('json').textContent = JSON.stringify(exported(), null, 2);
+    try { localStorage.setItem(KEY, JSON.stringify({ params: exported(), style: ST })); } catch (e) { /* storage unavailable */ }
+    loop();
+  }
+  function setSeed(n) { P.seed = Math.max(0, Math.round(Number(n)) || 0); sync(); }
+
+  // animation: play sweeps growth up and down; pointer mode eases growth toward the pointer position
+  let playing = false, pointer = false, dir = 1, wait = 0, target = null, raf = 0, last = 0;
+  const active = () => playing || pointer || (P.sway > 0 && !reduced);
+  function tick(ts) {
+    const dt = Math.min(0.05, Math.max(0, (ts - last) / 1000));
+    last = ts;
+    let changed = false;
+    if (playing) {
+      if (wait > 0) wait -= dt;
+      else {
+        P.growth = Math.max(0, Math.min(1, P.growth + (dir * dt) / 7));
+        if (P.growth >= 1) { dir = -1; wait = 1; } else if (P.growth <= 0) { dir = 1; wait = 0.3; }
+        changed = true;
+      }
+    } else if (pointer && target !== null && Math.abs(target - P.growth) > 0.0005) {
+      P.growth += (target - P.growth) * Math.min(1, dt * 6);
+      changed = true;
+    }
+    if (P.sway > 0 && !reduced) { P.phase += dt * 0.9; changed = true; }
+    if (changed) drawMain();
+    raf = active() ? requestAnimationFrame(tick) : 0;
+    if (!raf) { drawVariants(); $('json').textContent = JSON.stringify(exported(), null, 2); }
+  }
+  function loop() { if (!raf && active()) { last = performance.now(); raf = requestAnimationFrame(tick); } }
+  function setPlaying(on) {
+    playing = on;
+    $('btn-play').textContent = on ? 'Pause' : 'Play';
+    if (on) { if (P.growth >= 1) dir = -1; if (P.growth <= 0) dir = 1; wait = 0; pointer = false; $('pointer').checked = false; $('stage').classList.remove('tracking'); }
+    else { drawVariants(); $('json').textContent = JSON.stringify(exported(), null, 2); }
+    loop();
+  }
+
+  $('btn-play').addEventListener('click', () => setPlaying(!playing));
+  $('pointer').addEventListener('change', (e) => {
+    pointer = e.target.checked; target = null;
+    $('stage').classList.toggle('tracking', pointer);
+    if (pointer && playing) { playing = false; $('btn-play').textContent = 'Play'; }
+    if (!pointer) { drawVariants(); $('json').textContent = JSON.stringify(exported(), null, 2); }
+    loop();
+  });
+  $('stage').addEventListener('pointermove', (e) => {
+    if (!pointer) return;
+    const r = e.currentTarget.getBoundingClientRect();
+    target = Math.max(0, Math.min(1, (e.clientX - r.left - r.width * 0.06) / (r.width * 0.88)));
+  });
+  $('p-growth').addEventListener('input', (e) => {
+    if (playing) setPlaying(false);
+    P.growth = Number(e.target.value); target = null;
+    drawMain(); drawVariants();
+    $('json').textContent = JSON.stringify(exported(), null, 2);
+  });
+  $('groups').addEventListener('input', (e) => { const k = e.target.dataset.key; (isStyle(k) ? ST : P)[k] = Number(e.target.value); sync(); });
+  $('seed').addEventListener('change', (e) => setSeed(e.target.value));
+  $('seed-prev').addEventListener('click', () => setSeed(P.seed - 1));
+  $('seed-next').addEventListener('click', () => setSeed(P.seed + 1));
+  $('btn-seed').addEventListener('click', () => setSeed(Math.floor(Math.random() * 100000)));
+  $('variants').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) setSeed(b.dataset.seed); });
+  $('fills').addEventListener('click', (e) => { const b = e.target.closest('button'); if (b) { ST.fill = b.dataset.fill; sync(); } });
+  $('fill').addEventListener('input', (e) => { ST.fill = e.target.value; sync(); });
+  $('stroke').addEventListener('input', (e) => { ST.stroke = e.target.value; sync(); });
+  $('btn-reset').addEventListener('click', () => { const seed = P.seed; P = Object.assign({}, CurlyKumo.DEFAULTS, { seed }); ST = Object.assign({}, STYLE); sync(); });
+
+  function copy(text, btn) {
+    const label = btn.textContent;
+    const done = () => { btn.textContent = 'Copied'; setTimeout(() => { btn.textContent = label; }, 1400); };
+    const fail = () => {
+      $('fallback').hidden = false;
+      const t = $('fallback-text');
+      t.value = text; t.focus(); t.select();
+      $('fallback').scrollIntoView({ block: 'center' });
+    };
+    try { navigator.clipboard.writeText(text).then(done, fail); } catch (e) { fail(); }
+  }
+  $('btn-svg').addEventListener('click', (e) => copy(currentSVG, e.currentTarget));
+  $('btn-json').addEventListener('click', (e) => copy(JSON.stringify(exported(), null, 2), e.currentTarget));
+
+  $('usage').textContent = [
+    '<script src="curlykumo.js"><\/script>',
+    '<svg id="sky" viewBox="-200 -120 400 240"></svg>',
+    '<script>',
+    "  const sky = document.getElementById('sky');",
+    '  // progress runs from 0 to 1: load progress, a timer,',
+    '  // or the pointer position',
+    '  function show(progress) {',
+    '    const frame = CurlyKumo.generate({ seed: 34, growth: progress });',
+    '    sky.innerHTML = CurlyKumo.toSVG(frame, {',
+    "      fill: '#dd3a2c', stroke: '#1a1210',",
+    '      strokeWidth: 2.4, margin: 3.2,',
+    '    });',
+    '  }',
+    '  show(0.6);',
+    '<\/script>',
+  ].join('\n');
+
+  // live examples of the <curly-kumo> tag
+  $('code-timed').textContent = ['<curly-kumo id="c" seed="8"', '            duration="1.5s"></curly-kumo>', '', 'c.growIn();    // 0 to 100', 'c.growOut();   // back to 0', 'c.growTo(60);  // any value'].join('\n');
+  $('code-fed').textContent = ['<curly-kumo id="c" seed="21"', '            growth="0"></curly-kumo>', '', '// call as often as the number changes', 'c.growth = entropyPercent;', '', "c.addEventListener('curlykumo-growend', (e) => {", '  if (e.detail.growth === 100) done();', '});'].join('\n');
+  $('code-scroll').textContent = ['<curly-kumo seed="5" enter="grow-in"', '            leave="grow-out"></curly-kumo>', '', '<curly-kumo seed="13" scroll-link></curly-kumo>'].join('\n');
+  $('demo-in').addEventListener('click', () => $('demo-timed').growIn());
+  $('demo-out').addEventListener('click', () => $('demo-timed').growOut());
+  let entropy = 0, lastPt = null, full = false;
+  const showEntropy = () => { $('entropy-out').textContent = `Entropy ${Math.round(entropy)} of 100` + (full ? ' · the cloud reported 100' : entropy === 0 ? ' · move the pointer over the panel' : ''); };
+  $('entropy-pad').addEventListener('pointermove', (e) => {
+    if (lastPt) entropy = Math.min(100, entropy + Math.hypot(e.clientX - lastPt[0], e.clientY - lastPt[1]) / 28);
+    lastPt = [e.clientX, e.clientY];
+    $('demo-fed').growth = entropy;
+    showEntropy();
+  });
+  $('entropy-pad').addEventListener('pointerleave', () => { lastPt = null; });
+  $('demo-fed').addEventListener('curlykumo-growend', (e) => { full = e.detail.growth === 100; showEntropy(); });
+  $('entropy-reset').addEventListener('click', () => { entropy = 0; full = false; lastPt = null; $('demo-fed').growth = 0; showEntropy(); });
+  showEntropy();
+
+  sync();
+})();
+</script>
+</body>
+</html>

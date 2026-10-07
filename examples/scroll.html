@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>curlykumo: scroll</title>
+<style>
+  body { font: 16px/1.5 system-ui, sans-serif; max-width: 520px; margin: 40px auto; padding: 0 16px; }
+  .gap { height: 90vh; }
+</style>
+</head>
+<body>
+<h1>Scroll</h1>
+<p>Scroll down the page.</p>
+<div class="gap"></div>
+
+<h2>Scroll trigger</h2>
+<p>This cloud grows in when half of it is visible and grows out when less than half is visible.</p>
+<curly-kumo seed="5" enter="grow-in" leave="grow-out" duration="1.2s"></curly-kumo>
+<div class="gap"></div>
+
+<h2>Scroll-linked</h2>
+<p>This cloud follows the scroll position. It is at 0 when its centre is at the bottom edge of the window and at 100 when its centre reaches the middle.</p>
+<curly-kumo seed="13" scroll-link></curly-kumo>
+<div class="gap"></div>
+
+<script src="../curlykumo.js"></script>
+</body>
+</html>
